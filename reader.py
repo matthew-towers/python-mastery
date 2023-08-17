@@ -23,16 +23,52 @@
 
 import csv
 
+from abc import ABC, abstractmethod
+
+class CSVParser(ABC):
+
+    def parse(self, filename):
+        records = []
+        with open(filename) as f:
+            rows = csv.reader(f)
+            headers = next(rows)
+            for row in rows:
+                record = self.make_record(headers, row)
+                records.append(record)
+        return records
+
+    @abstractmethod
+    def make_record(self, headers, row):
+        pass
+
+class DictCSVParser(CSVParser):
+    def __init__(self, types):
+        self.types = types
+
+    def make_record(self, headers, row):
+        return { name: func(val) for name, func, val in zip(headers, self.types, row) }
+
+class InstanceCSVParser(CSVParser):
+    def __init__(self, cls):
+        self.cls = cls
+
+    def make_record(self, headers, row):
+        return self.cls.from_row(row)
+
+# Ex 3.7: reimplement the `read_csv_as_dicts()` and
+# `read_csv_as_instances()` functions to use the classes above
+
 def read_csv_as_dicts(filename, casting_functions):
+    rows_as_dicts = [] # say we want it to return an empty list if the open
+    # fails
     with open(filename) as f:
         rows = csv.reader(f)
         headers = next(rows)
-        rows_as_dicts = []
+        parser = DictCSVParser(casting_functions)
         for row in rows:
-            d = {colname: casting_fn(entry) for colname, casting_fn, entry in
-                 zip(headers, casting_functions, row)}
+            d = parser.make_record(headers, row)
             rows_as_dicts.append(d)
-        return rows_as_dicts
+    return rows_as_dicts
 
 
 def read_csv_as_instances(filename, cls):
@@ -43,6 +79,8 @@ def read_csv_as_instances(filename, cls):
     with open(filename) as f:
         rows = csv.reader(f)
         headers = next(rows)
+        parser = InstanceCSVParser(cls)
         for row in rows:
-            records.append(cls.from_row(row))
+            records.append(parser.make_record(headers, row))
     return records
+

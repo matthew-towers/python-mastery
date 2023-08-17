@@ -12,6 +12,12 @@ class Stock:
 
     _types = (str, int, float) # "private", hence the _
 
+    def __repr__(self):
+        return f"Stock('{self.name}', {self.shares}, {self.price})"
+
+    def __eq__(self, other):
+        return isinstance(other, Stock) and ((self.name, self.shares, self.price) == (other.name, other.shares, other.price))
+
     def __init__(self, name, shares, price):
         self.name = name
         self.shares = shares

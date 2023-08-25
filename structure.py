@@ -24,6 +24,7 @@
 # with `_` to be set). 
 
 import sys
+import inspect
 
 class Structure:
     # def __init__(self, *args):
@@ -50,10 +51,35 @@ class Structure:
         else:
             raise AttributeError('No attribute %s' % attrname)
 
+    @classmethod
+    def set_fields(cls):
+        # ex 6.3:
+        # inspect __init__ to get the arg names
+        # then set the _fields variable accordingly
+        # This is for an older version of the subclasses with no fields class
+        # var
+        params = list(inspect.signature(cls.__init__).parameters)
+        cls._fields = tuple(params[1:])
+
+    @classmethod
+    def create_init(cls):
+        args = ", ".join(cls._fields)
+        code = f'def __init__(self, {args}):\n'
+        for field in cls._fields:
+            code += f'    self.{field} = {field}\n'
+        locs = {}
+        exec(code, locs)
+        cls.__init__ = locs['__init__']
+
+
 
 
 class Stock(Structure):
     _fields = ('name','shares','price')
+    # def __init__(self, name, shares, price):
+    #     self._init()
 
 class Date(Structure):
     _fields = ('year', 'month', 'day')
+    # def __init__(self, year, month, day):
+    #     self._init()

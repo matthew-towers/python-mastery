@@ -133,3 +133,33 @@ class VStock:
         self.name = name
         self.shares = shares
         self.price = price
+
+# Ex 6.5
+
+# Modify the `ValidatedFunction` class so that it enforces value checks
+# attached via function annotations.  
+
+# Hint: To do this, play around with signature binding. Use the `bind()`
+# method of `Signature` objects to bind function arguments to argument
+# names.  Then cross reference this information with the
+# `__annotations__` attribute to get the different validator classes.
+
+import inspect
+
+class ValidatedFunction:
+    def __init__(self, func):
+        self.func = func
+        self.annotations = func.__annotations__ # a dict, var name: type
+
+    def __call__(self, *args, **kwargs):
+        sig = inspect.signature(self.func)
+        # print(sig)
+        # print(*args) # uncomment these two to see what's going on with the
+        # example of a failure when applying this to a class method from
+        # exercise 6.5.
+        bin = sig.bind(*args, **kwargs)
+        for paramName, value in bin.arguments.items():
+            paramType = self.annotations[paramName]
+            paramType.check(value)
+        result = self.func(*args, **kwargs)
+        return result

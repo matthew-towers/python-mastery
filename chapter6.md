@@ -61,6 +61,11 @@ a `Structure` class which generates init functions for its subclasses, we could
 install `_init` as a `@staticmethod` in `Structure` exactly as it is above.  It
 can be static because it doesn't require the `self` argument to be passed.
 
+Docs for `sys` are [here](https://docs.python.org/3/library/sys.html).
+`_getframe(n)` returns a frame object `n` calls below the top of the stack. Docs
+for frame objects are
+[here](https://docs.python.org/3/reference/datamodel.html#types).
+
 The last method of building init functions for subclasses using a single method
 in a parent class is to generate and execute the code yourself, using a list of
 fields from the subclass:
@@ -99,7 +104,10 @@ which then live in `f.__dict__`.
 
 The inspect module lets you get information on functions in a usable form.
 `inspect.signature(func)` records formal params and their defaults.
-`inspect.signature(func).parameters` has the names of the formals.
+`inspect.signature(func).parameters` has the names of the formals.  It's a
+"mappingproxy" object, with a keys attribute which you can turn into a list of
+param names.
+
 `sig.parameters['a'].default` gets the default value, if it exists.
 
 ## `eval` and `exec`

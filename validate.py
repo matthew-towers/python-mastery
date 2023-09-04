@@ -5,6 +5,9 @@
 #     def check(cls, value):
 #         return value
 
+import inspect
+from functools import wraps
+
 # New version for ex 4.3
 class Validator:
     def __init__(self, name):
@@ -163,3 +166,67 @@ class ValidatedFunction:
             paramType.check(value)
         result = self.func(*args, **kwargs)
         return result
+
+# Chapter 7
+# Exercise 7.1
+
+def validated(f):
+    # style: there are some things that could be moved outside wrapped
+    # would that be good? They still have to live on in the closure
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        # get the annotations from f, a param name - type dict
+        annotations = f.__annotations__
+        sig = inspect.signature(f)
+        params = sig.parameters.keys()
+        bound = sig.bind(*args, **kwargs)
+        errors = "" # better to have used a list
+        for param, value in bound.arguments.items():
+            # really beyond stupid - iterate over annotations!!!!
+            if param in annotations:
+                paramType = annotations[param]
+                try:
+                    paramType.check(value)
+                except TypeError as e:
+                    errors += "\t" + param + ": " + str(e) + "\n"
+                # we'd also need to catch valueerrors for Postive etc
+                # or just catch any old exception, as the solutions do ?!
+        if errors:
+            raise TypeError("Bad argument(s):\n" + errors)
+        # now check the output type
+        output = f(*args, **kwargs)
+        returnType = annotations.get('return', None)
+        if returnType is not None:
+            try:
+                returnType.check(output)
+            except Exception as e:
+                raise TypeError(f"Bad return type: {e}")
+        return output
+    return wrapped
+            
+# Make a new decorator `@enforce()` that enforces types specified
+# via keyword arguments to the decorator instead.  For example:
+
+# ```python
+# @enforce(x=Integer, y=Integer, return_=Integer)
+# def add(x, y):
+#     return x + y
+# ```
+
+def enforce(**types):
+    def enforced(f):
+        returnType = types.pop('return_')
+        # ^ must be here, otherwise we'll try to pop it with every call!
+        def wrapped(*args, **kwargs):
+            # get the parameter bindings for the call to f
+            sig = inspect.signature(f)
+            bound = sig.bind(*args, **kwargs)
+            # check them against "types"
+            for paramName, tp in types.items():
+                tp.check(bound.arguments[paramName])
+            result = f(*args, **kwargs)
+            returnType.check(result)
+            return result
+        return wrapped
+    return enforced
+    

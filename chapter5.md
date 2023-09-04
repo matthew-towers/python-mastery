@@ -44,7 +44,7 @@ reduce(lambda x, y: f"({x}*{y})", ["b", "c"], "a")
 
 returns `((a*b)*c)`. (Beazley's code for reduce, on p.335 5-30, is something a
 bit odd - neither left nor right fold. It would produce `(3*(2*(1*0)))` given a
-generic op `*` and the list `[1, 2, 3]` and initial 0).
+generic op `*`, the list `[1, 2, 3]`, and initial 0).
 
 To note: the true right fold of a generic operation with 0 and `[1, 2, 3]` is
 `(1*(2*(3*0)))` so it's wrong to think of 0 as the initial value if that implies
@@ -114,7 +114,7 @@ This one is still confusing me a bit.  I think it's helpful to remember that the
 syntax
 
 ```python
-@decorator
+@property
 def f(x):
     ...
     return y
@@ -199,4 +199,12 @@ if __name__ = '__main__':
     unittest.main()
 ```
 
+## Type hints
 
+```python
+def add(x:int, y:int) -> int:
+    ...
+```
+
+Access these with `add.__annotations__`, a dict with formal param names as keys
+and their types as values.

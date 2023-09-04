@@ -25,8 +25,24 @@
 
 import sys
 import inspect
+from validate import Validator, validated
+
+def validate_attributes(cls):
+    validators = []
+    for name, val in vars(cls).items():
+        if isinstance(val, Validator):
+            validators.append(val)
+        elif callable(val) and val.__annotations__:
+            setattr(cls, name, validated(val))
+    cls._types = tuple([ getattr(v, 'expected_type', lambda x: x)
+                   for v in validators ])
+    cls._fields = tuple([v.name for v in validators])
+    if cls._fields:
+        cls.create_init()
+    return cls
 
 class Structure:
+    _types = ()
     # def __init__(self, *args):
     #     if len(args) != len(self._fields):
     #         raise TypeError(f"Expected {len(self._fields)} arguments")
@@ -61,18 +77,36 @@ class Structure:
         params = list(inspect.signature(cls.__init__).parameters)
         cls._fields = tuple(params[1:])
 
+    # My solution:
+    # @classmethod
+    # def create_init(cls):
+    #     args = ", ".join(cls._fields)
+    #     code = f'def __init__(self, {args}):\n'
+    #     for field in cls._fields:
+    #         code += f'    self.{field} = {field}\n'
+    #     locs = {}
+    #     exec(code, locs)
+    #     cls.__init__ = locs['__init__']
+
+    # official solution:
     @classmethod
     def create_init(cls):
-        args = ", ".join(cls._fields)
-        code = f'def __init__(self, {args}):\n'
-        for field in cls._fields:
-            code += f'    self.{field} = {field}\n'
-        locs = {}
+        args = ','.join(cls._fields)
+        code = 'def __init__(self, {0}):\n'.format(args)
+        statements = [ '    self.{0} = {0}'.format(name) for name in cls._fields]
+        code += '\n'.join(statements)
+        locs = { }
         exec(code, locs)
         cls.__init__ = locs['__init__']
 
+    @classmethod
+    def from_row(cls, row):
+        rowdata = [func(val) for func, val in zip(cls._types, row)]
+        return cls(*rowdata)
 
-
+    @classmethod
+    def __init_subclass__(cls):
+        validate_attributes(cls)
 
 class Stock(Structure):
     _fields = ('name','shares','price')
@@ -83,3 +117,9 @@ class Date(Structure):
     _fields = ('year', 'month', 'day')
     # def __init__(self, year, month, day):
     #     self._init()
+
+
+# ex 7.4
+def typed_structure(clsname, **validators):
+    cls = type(clsname, (Structure,), validators)
+    return cls

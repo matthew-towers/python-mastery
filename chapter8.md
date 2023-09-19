@@ -108,3 +108,29 @@ happens.
 > Starting in Python 3.3, a new `yield from` statement can be used to
 > delegate generators to another function.  It is a useful way to clean-up
 > code that relies on generators.
+
+## async/await
+
+`async` is alternate syntax for defining coroutines.
+
+```python
+async def greet(name):
+    return f'Hello {name}'
+```
+
+Now `g = greet("matt")` creates a coroutine object. If you call
+`g.send(None)` it will raise a `StopIteration` with the message `hello
+matt`.
+
+`await` is used to call a coroutine:
+
+```python
+async def main():
+    names = ["a", "b"]
+    for n in names:
+        g = await greet(n)
+        print(g)
+```
+
+Now when you make a main and send it `None`, it prints the two hello
+messages then raises a `StopIteration`.

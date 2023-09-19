@@ -25,7 +25,8 @@
 
 import sys
 import inspect
-from validate import Validator, validated
+from validate import *
+# from validate import Validator, validated
 
 def validate_attributes(cls):
     validators = []

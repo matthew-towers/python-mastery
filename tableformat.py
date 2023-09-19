@@ -128,7 +128,7 @@ def create_formatter(formatname, upper_headers=False, column_formats=('"%s"','%d
         else:
             return TextTableFormatter()
     if formatname == 'csv':
-        class PF(ColumnFormatMixin, CSVTableFormatter)
+        class PF(ColumnFormatMixin, CSVTableFormatter):
             formats = column_formats
         return PF()
     raise RuntimeError(f"Format {formatname} unknown")
